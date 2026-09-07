@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.env
+.env.local
+.env*.local
+*.log
+gen-lang-client-*.json
+google-apps-script/Code.gs
+.DS_Store
