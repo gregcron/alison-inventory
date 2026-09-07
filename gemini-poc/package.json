@@ -1,0 +1,11 @@
+{
+  "name": "gemini-antique-research-poc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "POC: identify antique/resale items from photos using Gemini multimodal + Google Search grounding",
+  "main": "test-antique-research.js",
+  "dependencies": {
+    "@google/genai": "^1.9.0",
+    "dotenv": "^16.4.5"
+  }
+}

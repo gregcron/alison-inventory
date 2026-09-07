@@ -10,6 +10,8 @@ export default function AddItemPage() {
   const [cost, setCost] = useState("");
   const [status, setStatus] = useState("idle"); // idle | saving | success | error
   const [errorMsg, setErrorMsg] = useState("");
+  const [researching, setResearching] = useState(false);
+  const [research, setResearch] = useState(null);
   const cameraInputRef = useRef(null);
   const libraryInputRef = useRef(null);
 
@@ -66,6 +68,7 @@ export default function AddItemPage() {
       if (photoPreview) URL.revokeObjectURL(photoPreview);
       setPhoto(resized);
       setPhotoPreview(URL.createObjectURL(resized));
+      setResearch(null);
     } catch (err) {
       setErrorMsg(err.message || "Could not read that photo.");
       setStatus("error");
@@ -77,6 +80,7 @@ export default function AddItemPage() {
     setDescription("");
     setCost("");
     setPhoto(null);
+    setResearch(null);
     if (photoPreview) URL.revokeObjectURL(photoPreview);
     setPhotoPreview(null);
     if (cameraInputRef.current) cameraInputRef.current.value = "";
@@ -107,6 +111,8 @@ export default function AddItemPage() {
       fd.append("item", item.trim());
       fd.append("description", description.trim());
       fd.append("cost", costNum.toFixed(2));
+      if (research?.suggested_sale_price != null)
+        fd.append("suggested_price", research.suggested_sale_price);
       if (photo) fd.append("photo", photo);
 
       const res = await fetch("/api/items", { method: "POST", body: fd });
@@ -120,6 +126,27 @@ export default function AddItemPage() {
     } catch (err) {
       setErrorMsg(err.message || "Something went wrong. Please try again.");
       setStatus("error");
+    }
+  }
+
+  async function onIdentify() {
+    if (!photo || researching) return;
+    setResearching(true);
+    setErrorMsg("");
+    try {
+      const fd = new FormData();
+      fd.append("photo", photo);
+      const res = await fetch("/api/research", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Research failed (${res.status})`);
+      setResearch(data);
+      if (data.item) setItem(data.item);
+      if (data.description) setDescription(data.description);
+    } catch (err) {
+      setErrorMsg(err.message || "Identification failed. You can still save manually.");
+      setStatus("error");
+    } finally {
+      setResearching(false);
     }
   }
 
@@ -173,6 +200,47 @@ export default function AddItemPage() {
             >
               <span style={styles.photoLabel}>🖼&nbsp; Choose Photo</span>
             </button>
+          </div>
+        )}
+
+        {photoPreview && (
+          <button
+            type="button"
+            style={styles.researchButton}
+            onClick={onIdentify}
+            disabled={saving || researching}
+          >
+            {researching ? "🔍 Researching… (about 10s)" : "✨ Identify & Price"}
+          </button>
+        )}
+
+        {research && (
+          <div style={styles.researchPanel}>
+            {research.suggested_sale_price != null ? (
+              <p style={styles.price}>
+                Suggested: <strong>${research.suggested_sale_price}</strong>
+                {research.suggested_price_low != null &&
+                  research.suggested_price_high != null &&
+                  ` (range $${research.suggested_price_low}–$${research.suggested_price_high})`}
+                {research.confidence ? ` · ${research.confidence} confidence` : ""}
+              </p>
+            ) : (
+              <p style={styles.price}>No price suggestion — not enough evidence.</p>
+            )}
+            {(research.comparables || []).slice(0, 4).map((c, i) => (
+              <p key={i} style={styles.comp}>
+                {c.price_type === "sold" ? "✓ sold" : c.price_type || "asking"}
+                {c.price != null ? ` $${c.price}` : ""} — {c.title}{" "}
+                {c.url ? (
+                  <a href={c.url} target="_blank" rel="noreferrer" style={styles.link}>
+                    link
+                  </a>
+                ) : null}
+              </p>
+            ))}
+            {(research.warnings || []).map((w, i) => (
+              <p key={i} style={styles.warn}>⚠ {w}</p>
+            ))}
           </div>
         )}
 
@@ -300,6 +368,28 @@ const styles = {
     borderRadius: 12,
     cursor: "pointer",
   },
+  researchButton: {
+    padding: "12px",
+    fontSize: 16,
+    fontWeight: 600,
+    color: "#4a6741",
+    background: "#eef4ec",
+    border: "1px solid #9db894",
+    borderRadius: 12,
+    cursor: "pointer",
+  },
+  researchPanel: {
+    background: "#f7f9f6",
+    border: "1px solid #d8e2d4",
+    borderRadius: 10,
+    padding: "10px 14px",
+    fontSize: 14,
+    color: "#333",
+  },
+  price: { margin: "4px 0 8px", fontSize: 15 },
+  comp: { margin: "3px 0", lineHeight: 1.35, color: "#555" },
+  link: { color: "#2e6da4", marginLeft: 4 },
+  warn: { margin: "4px 0", color: "#8a6d00", fontSize: 13 },
   success: {
     textAlign: "center",
     color: "#2e7d32",
