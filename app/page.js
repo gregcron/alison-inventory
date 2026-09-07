@@ -10,7 +10,8 @@ export default function AddItemPage() {
   const [cost, setCost] = useState("");
   const [status, setStatus] = useState("idle"); // idle | saving | success | error
   const [errorMsg, setErrorMsg] = useState("");
-  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const libraryInputRef = useRef(null);
 
   useEffect(() => {
     if ("serviceWorker" in navigator) {
@@ -78,7 +79,8 @@ export default function AddItemPage() {
     setPhoto(null);
     if (photoPreview) URL.revokeObjectURL(photoPreview);
     setPhotoPreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+    if (libraryInputRef.current) libraryInputRef.current.value = "";
   }
 
   async function onSubmit(e) {
@@ -129,25 +131,50 @@ export default function AddItemPage() {
 
       <form onSubmit={onSubmit} style={styles.form}>
         <input
-          ref={fileInputRef}
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={onPhotoChange}
+          style={{ display: "none" }}
+        />
+        <input
+          ref={libraryInputRef}
           type="file"
           accept="image/*"
           onChange={onPhotoChange}
           style={{ display: "none" }}
-          id="photo-input"
         />
-        <button
-          type="button"
-          style={styles.photoButton}
-          onClick={() => fileInputRef.current?.click()}
-          disabled={saving}
-        >
-          {photoPreview ? (
+        {photoPreview ? (
+          <button
+            type="button"
+            style={styles.photoButton}
+            onClick={() => cameraInputRef.current?.click()}
+            disabled={saving}
+            title="Tap to retake photo"
+          >
             <img src={photoPreview} alt="Selected" style={styles.preview} />
-          ) : (
-            <span style={styles.photoLabel}>📷&nbsp; Add Photo</span>
-          )}
-        </button>
+          </button>
+        ) : (
+          <div style={styles.photoRow}>
+            <button
+              type="button"
+              style={{ ...styles.photoButton, ...styles.photoHalf }}
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={saving}
+            >
+              <span style={styles.photoLabel}>📷&nbsp; Take Photo</span>
+            </button>
+            <button
+              type="button"
+              style={{ ...styles.photoButton, ...styles.photoHalf }}
+              onClick={() => libraryInputRef.current?.click()}
+              disabled={saving}
+            >
+              <span style={styles.photoLabel}>🖼&nbsp; Choose Photo</span>
+            </button>
+          </div>
+        )}
 
         <label style={styles.label}>
           Item *
@@ -223,13 +250,15 @@ const styles = {
   },
   h1: { fontSize: 24, margin: "8px 0 16px", color: "#333" },
   form: { display: "flex", flexDirection: "column", gap: 14 },
+  photoRow: { display: "flex", gap: 12 },
+  photoHalf: { flex: 1 },
   photoButton: {
     width: "100%",
     minHeight: 160,
     border: "2px dashed #9db894",
     borderRadius: 12,
     background: "#f4f8f2",
-    fontSize: 20,
+    fontSize: 18,
     color: "#4a6741",
     cursor: "pointer",
     padding: 0,

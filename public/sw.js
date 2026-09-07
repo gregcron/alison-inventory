@@ -1,5 +1,5 @@
 // Bump this on each deploy that changes cached assets.
-const CACHE = "alison-inventory-v1";
+const CACHE = "alison-inventory-v2";
 
 // Only ever cache same-origin GET requests for static assets.
 const CACHEABLE = /^\/(_next\/static|icons|manifest\.webmanifest|favicon\.ico)/;
