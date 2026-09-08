@@ -13,6 +13,8 @@ export default function AddItemPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [researching, setResearching] = useState(false);
   const [research, setResearch] = useState(null);
+  const [lensBusy, setLensBusy] = useState(false);
+  const [photoFileId, setPhotoFileId] = useState(null); // Drive id if already uploaded for Lens
   const cameraInputRef = useRef(null);
   const libraryInputRef = useRef(null);
 
@@ -70,6 +72,7 @@ export default function AddItemPage() {
       setPhoto(resized);
       setPhotoPreview(URL.createObjectURL(resized));
       setResearch(null);
+      setPhotoFileId(null);
     } catch (err) {
       setErrorMsg(err.message || "Could not read that photo.");
       setStatus("error");
@@ -83,6 +86,7 @@ export default function AddItemPage() {
     setSalePrice("");
     setPhoto(null);
     setResearch(null);
+    setPhotoFileId(null);
     if (photoPreview) URL.revokeObjectURL(photoPreview);
     setPhotoPreview(null);
     if (cameraInputRef.current) cameraInputRef.current.value = "";
@@ -118,7 +122,8 @@ export default function AddItemPage() {
         fd.append("sale_price", saleNum);
       if (research?.suggested_sale_price != null)
         fd.append("suggested_price", research.suggested_sale_price);
-      if (photo) fd.append("photo", photo);
+      if (photoFileId) fd.append("photo_file_id", photoFileId);
+      else if (photo) fd.append("photo", photo);
 
       const res = await fetch("/api/items", { method: "POST", body: fd });
       const data = await res.json().catch(() => ({}));
@@ -157,25 +162,24 @@ export default function AddItemPage() {
     }
   }
 
-  function onLensSearch() {
-    if (!photo) return;
-    // Google Lens accepts a direct image POST and redirects to results.
-    // A real form submit is used so it opens as a navigation (no CORS).
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = `https://lens.google.com/v3/upload?stcs=${Date.now()}`;
-    form.target = "_blank";
-    form.enctype = "multipart/form-data";
-    const input = document.createElement("input");
-    input.type = "file";
-    input.name = "encoded_image";
-    const dt = new DataTransfer();
-    dt.items.add(photo);
-    input.files = dt.files;
-    form.appendChild(input);
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
+  async function onLensSearch() {
+    if (!photo || lensBusy) return;
+    setLensBusy(true);
+    setErrorMsg("");
+    try {
+      const fd = new FormData();
+      fd.append("photo", photo);
+      const res = await fetch("/api/lens", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Lens lookup failed (${res.status})`);
+      if (data.file_id) setPhotoFileId(data.file_id); // reuse on save
+      window.open(data.lens_url, "_blank");
+    } catch (err) {
+      setErrorMsg(err.message || "Could not open Google Lens for this photo.");
+      setStatus("error");
+    } finally {
+      setLensBusy(false);
+    }
   }
 
   const saving = status === "saving";
@@ -245,10 +249,10 @@ export default function AddItemPage() {
               type="button"
               style={styles.lensButton}
               onClick={onLensSearch}
-              disabled={saving || researching}
-              title="Open Google Lens results for this photo in a new tab"
+              disabled={saving || researching || lensBusy}
+              title="Open Google image search results for this photo in a new tab"
             >
-              🔎 Lens
+              {lensBusy ? "⏳" : "🔎"} Lens
             </button>
           </div>
         )}
