@@ -166,6 +166,9 @@ export default function AddItemPage() {
     if (!photo || lensBusy) return;
     setLensBusy(true);
     setErrorMsg("");
+    // Open the tab synchronously (popup blockers kill window.open after await),
+    // then navigate it once the search URL is ready.
+    const win = window.open("", "_blank");
     try {
       const fd = new FormData();
       fd.append("photo", photo);
@@ -173,9 +176,11 @@ export default function AddItemPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `Lens lookup failed (${res.status})`);
       if (data.file_id) setPhotoFileId(data.file_id); // reuse on save
-      window.open(data.lens_url, "_blank");
+      if (win) win.location.href = data.lens_url;
+      else window.location.href = data.lens_url;
     } catch (err) {
-      setErrorMsg(err.message || "Could not open Google Lens for this photo.");
+      if (win) win.close();
+      setErrorMsg(err.message || "Could not open Google image search for this photo.");
       setStatus("error");
     } finally {
       setLensBusy(false);
