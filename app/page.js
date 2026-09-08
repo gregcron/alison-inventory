@@ -157,6 +157,27 @@ export default function AddItemPage() {
     }
   }
 
+  function onLensSearch() {
+    if (!photo) return;
+    // Google Lens accepts a direct image POST and redirects to results.
+    // A real form submit is used so it opens as a navigation (no CORS).
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = `https://lens.google.com/v3/upload?stcs=${Date.now()}`;
+    form.target = "_blank";
+    form.enctype = "multipart/form-data";
+    const input = document.createElement("input");
+    input.type = "file";
+    input.name = "encoded_image";
+    const dt = new DataTransfer();
+    dt.items.add(photo);
+    input.files = dt.files;
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+  }
+
   const saving = status === "saving";
 
   return (
@@ -211,14 +232,25 @@ export default function AddItemPage() {
         )}
 
         {photoPreview && (
-          <button
-            type="button"
-            style={styles.researchButton}
-            onClick={onIdentify}
-            disabled={saving || researching}
-          >
-            {researching ? "🔍 Researching… (about 10s)" : "✨ Identify & Price"}
-          </button>
+          <div style={styles.actionRow}>
+            <button
+              type="button"
+              style={styles.researchButton}
+              onClick={onIdentify}
+              disabled={saving || researching}
+            >
+              {researching ? "🔍 Researching… (about 10s)" : "✨ Identify & Price"}
+            </button>
+            <button
+              type="button"
+              style={styles.lensButton}
+              onClick={onLensSearch}
+              disabled={saving || researching}
+              title="Open Google Lens results for this photo in a new tab"
+            >
+              🔎 Lens
+            </button>
+          </div>
         )}
 
         {research && (
@@ -396,7 +428,9 @@ const styles = {
     borderRadius: 12,
     cursor: "pointer",
   },
+  actionRow: { display: "flex", gap: 10 },
   researchButton: {
+    flex: 1,
     padding: "12px",
     fontSize: 16,
     fontWeight: 600,
@@ -405,6 +439,17 @@ const styles = {
     border: "1px solid #9db894",
     borderRadius: 12,
     cursor: "pointer",
+  },
+  lensButton: {
+    padding: "12px 18px",
+    fontSize: 16,
+    fontWeight: 600,
+    color: "#4a6741",
+    background: "#eef4ec",
+    border: "1px solid #9db894",
+    borderRadius: 12,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
   },
   researchPanel: {
     background: "#f7f9f6",
