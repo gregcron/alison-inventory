@@ -45,8 +45,6 @@ export async function POST(request) {
     if (Number.isFinite(salePrice) && salePrice >= 0) {
       payload.sale_price = salePrice;
     }
-    const photoFileId = (form.get("photo_file_id") || "").toString().trim();
-    if (photoFileId) payload.photo_file_id = photoFileId;
 
     if (photo && typeof photo === "object" && photo.size > 0) {
       if (photo.size > 20 * 1024 * 1024) {

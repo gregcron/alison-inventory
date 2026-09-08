@@ -30,29 +30,6 @@ function doPost(e) {
       return respond(401, { error: "Unauthorized." });
     }
 
-    // Lens helper: store the photo link-shared so Google's crawler can
-    // fetch it, and return a direct image URL. The file id is returned so a
-    // later "save" can reuse it instead of uploading twice.
-    if (body.action === "lens") {
-      if (!body.photo || !body.photo.data)
-        return respond(400, { error: "A photo is required." });
-      const lbytes = Utilities.base64Decode(body.photo.data);
-      const lblob = Utilities.newBlob(
-        lbytes,
-        body.photo.mimeType || "image/jpeg",
-        body.photo.name || "photo.jpg"
-      );
-      const lfile = DriveApp.getFolderById(FOLDER_ID).createFile(lblob);
-      lfile.setSharing(
-        DriveApp.Access.ANYONE_WITH_LINK,
-        DriveApp.Permission.VIEW
-      );
-      return respond(200, {
-        file_id: lfile.getId(),
-        image_url: "https://lh3.googleusercontent.com/d/" + lfile.getId(),
-      });
-    }
-
     const item = String(body.item || "").trim();
     const description = String(body.description || "").trim();
     const cost = parseFloat(body.cost);
@@ -60,14 +37,10 @@ function doPost(e) {
     if (!isFinite(cost) || cost < 0)
       return respond(400, { error: "A valid cost is required." });
 
-    // 1. Save the photo to Drive (if provided), or reuse a file already
-    //    uploaded by the "lens" action.
+    // 1. Save the photo to Drive (if provided).
     let photoLink = "";
     let uploadedFile = null;
-    if (body.photo_file_id) {
-      uploadedFile = DriveApp.getFileById(body.photo_file_id);
-      photoLink = uploadedFile.getUrl();
-    } else if (body.photo && body.photo.data) {
+    if (body.photo && body.photo.data) {
       const bytes = Utilities.base64Decode(body.photo.data);
       const blob = Utilities.newBlob(
         bytes,

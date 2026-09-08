@@ -14,7 +14,7 @@ export default function AddItemPage() {
   const [researching, setResearching] = useState(false);
   const [research, setResearch] = useState(null);
   const [lensBusy, setLensBusy] = useState(false);
-  const [photoFileId, setPhotoFileId] = useState(null); // Drive id if already uploaded for Lens
+  const [lensHint, setLensHint] = useState(false);
   const cameraInputRef = useRef(null);
   const libraryInputRef = useRef(null);
 
@@ -72,7 +72,7 @@ export default function AddItemPage() {
       setPhoto(resized);
       setPhotoPreview(URL.createObjectURL(resized));
       setResearch(null);
-      setPhotoFileId(null);
+      setLensHint(false);
     } catch (err) {
       setErrorMsg(err.message || "Could not read that photo.");
       setStatus("error");
@@ -86,7 +86,7 @@ export default function AddItemPage() {
     setSalePrice("");
     setPhoto(null);
     setResearch(null);
-    setPhotoFileId(null);
+    setLensHint(false);
     if (photoPreview) URL.revokeObjectURL(photoPreview);
     setPhotoPreview(null);
     if (cameraInputRef.current) cameraInputRef.current.value = "";
@@ -122,8 +122,7 @@ export default function AddItemPage() {
         fd.append("sale_price", saleNum);
       if (research?.suggested_sale_price != null)
         fd.append("suggested_price", research.suggested_sale_price);
-      if (photoFileId) fd.append("photo_file_id", photoFileId);
-      else if (photo) fd.append("photo", photo);
+      if (photo) fd.append("photo", photo);
 
       const res = await fetch("/api/items", { method: "POST", body: fd });
       const data = await res.json().catch(() => ({}));
@@ -166,22 +165,25 @@ export default function AddItemPage() {
     if (!photo || lensBusy) return;
     setLensBusy(true);
     setErrorMsg("");
-    // Open the tab synchronously (popup blockers kill window.open after await),
-    // then navigate it once the search URL is ready.
-    const win = window.open("", "_blank");
+    setLensHint(false);
     try {
-      const fd = new FormData();
-      fd.append("photo", photo);
-      const res = await fetch("/api/lens", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `Lens lookup failed (${res.status})`);
-      if (data.file_id) setPhotoFileId(data.file_id); // reuse on save
-      if (win) win.location.href = data.lens_url;
-      else window.location.href = data.lens_url;
+      // Share the local file via the native share sheet — no upload needed.
+      // iOS/Android: user picks Google/Chrome/Photos → "Search image with Lens".
+      if (navigator.canShare && navigator.canShare({ files: [photo] })) {
+        await navigator.share({
+          files: [photo],
+          title: "Search this item image",
+        });
+      } else {
+        // Fallback: open Lens's upload page; the photo is already on the device.
+        setLensHint(true);
+        window.open("https://lens.google.com/", "_blank");
+      }
     } catch (err) {
-      if (win) win.close();
-      setErrorMsg(err.message || "Could not open Google image search for this photo.");
-      setStatus("error");
+      if (err.name !== "AbortError") {
+        setErrorMsg("Sharing isn't available here — use the Lens app or upload the photo at lens.google.com.");
+        setStatus("error");
+      }
     } finally {
       setLensBusy(false);
     }
@@ -260,6 +262,12 @@ export default function AddItemPage() {
               {lensBusy ? "⏳" : "🔎"} Lens
             </button>
           </div>
+        )}
+
+        {lensHint && (
+          <p style={styles.hint}>
+            Tip: tap the 📷 icon in Lens and choose the photo you just took.
+          </p>
         )}
 
         {research && (
@@ -472,6 +480,7 @@ const styles = {
   comp: { margin: "3px 0", lineHeight: 1.35, color: "#555" },
   link: { color: "#2e6da4", marginLeft: 4 },
   warn: { margin: "4px 0", color: "#8a6d00", fontSize: 13 },
+  hint: { margin: 0, fontSize: 13, color: "#777", textAlign: "center" },
   success: {
     textAlign: "center",
     color: "#2e7d32",
