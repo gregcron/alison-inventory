@@ -342,8 +342,8 @@ const styles = {
   h1: { fontSize: 24, margin: "8px 0 16px", color: "#333" },
   form: { display: "flex", flexDirection: "column", gap: 14 },
   photoRow: { display: "flex", gap: 12 },
-  priceRow: { display: "flex", gap: 12 },
-  priceField: { flex: "0 1 130px" },
+  priceRow: { display: "flex", gap: 12, maxWidth: 420 },
+  priceField: { flex: "1 1 0", minWidth: 0 },
   photoHalf: { flex: 1 },
   photoButton: {
     width: "100%",
@@ -377,6 +377,9 @@ const styles = {
   },
   input: {
     fontSize: 17, // >=16px prevents iOS auto-zoom
+    width: "100%",
+    boxSizing: "border-box",
+    minWidth: 0,
     padding: "12px 14px",
     borderRadius: 10,
     border: "1px solid #ccc",
