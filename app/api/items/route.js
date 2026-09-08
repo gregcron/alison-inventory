@@ -41,6 +41,10 @@ export async function POST(request) {
     if (Number.isFinite(suggestedPrice) && suggestedPrice >= 0) {
       payload.suggested_price = suggestedPrice;
     }
+    const salePrice = parseFloat((form.get("sale_price") || "").toString());
+    if (Number.isFinite(salePrice) && salePrice >= 0) {
+      payload.sale_price = salePrice;
+    }
 
     if (photo && typeof photo === "object" && photo.size > 0) {
       if (photo.size > 20 * 1024 * 1024) {

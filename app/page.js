@@ -115,7 +115,9 @@ export default function AddItemPage() {
       fd.append("cost", costNum.toFixed(2));
       const saleNum = parseFloat(salePrice);
       if (Number.isFinite(saleNum) && saleNum >= 0)
-        fd.append("suggested_price", saleNum);
+        fd.append("sale_price", saleNum);
+      if (research?.suggested_sale_price != null)
+        fd.append("suggested_price", research.suggested_sale_price);
       if (photo) fd.append("photo", photo);
 
       const res = await fetch("/api/items", { method: "POST", body: fd });
@@ -276,7 +278,7 @@ export default function AddItemPage() {
         </label>
 
         <div style={styles.priceRow}>
-          <label style={{ ...styles.label, flex: 1 }}>
+          <label style={{ ...styles.label, ...styles.priceField }}>
             Cost *
             <input
               type="number"
@@ -291,7 +293,7 @@ export default function AddItemPage() {
               disabled={saving}
             />
           </label>
-          <label style={{ ...styles.label, flex: 1 }}>
+          <label style={{ ...styles.label, ...styles.priceField }}>
             Sale Price
             <input
               type="number"
@@ -341,6 +343,7 @@ const styles = {
   form: { display: "flex", flexDirection: "column", gap: 14 },
   photoRow: { display: "flex", gap: 12 },
   priceRow: { display: "flex", gap: 12 },
+  priceField: { flex: "0 1 130px" },
   photoHalf: { flex: 1 },
   photoButton: {
     width: "100%",

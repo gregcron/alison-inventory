@@ -61,6 +61,7 @@ function doPost(e) {
     // 2. Append the row. If this fails, delete the photo so orphaned
     //    files don't silently accumulate in the folder.
     const suggestedPrice = parseFloat(body.suggested_price);
+    const salePrice = parseFloat(body.sale_price);
     try {
       SpreadsheetApp.openById(SHEET_ID)
         .getSheetByName(SHEET_NAME)
@@ -71,6 +72,7 @@ function doPost(e) {
           cost.toFixed(2),
           photoLink,
           isFinite(suggestedPrice) ? suggestedPrice.toFixed(2) : "",
+          isFinite(salePrice) ? salePrice.toFixed(2) : "",
         ]);
     } catch (sheetErr) {
       if (uploadedFile) uploadedFile.setTrashed(true);
