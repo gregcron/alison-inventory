@@ -8,6 +8,7 @@ export default function AddItemPage() {
   const [item, setItem] = useState("");
   const [description, setDescription] = useState("");
   const [cost, setCost] = useState("");
+  const [salePrice, setSalePrice] = useState("");
   const [status, setStatus] = useState("idle"); // idle | saving | success | error
   const [errorMsg, setErrorMsg] = useState("");
   const [researching, setResearching] = useState(false);
@@ -79,6 +80,7 @@ export default function AddItemPage() {
     setItem("");
     setDescription("");
     setCost("");
+    setSalePrice("");
     setPhoto(null);
     setResearch(null);
     if (photoPreview) URL.revokeObjectURL(photoPreview);
@@ -111,8 +113,9 @@ export default function AddItemPage() {
       fd.append("item", item.trim());
       fd.append("description", description.trim());
       fd.append("cost", costNum.toFixed(2));
-      if (research?.suggested_sale_price != null)
-        fd.append("suggested_price", research.suggested_sale_price);
+      const saleNum = parseFloat(salePrice);
+      if (Number.isFinite(saleNum) && saleNum >= 0)
+        fd.append("suggested_price", saleNum);
       if (photo) fd.append("photo", photo);
 
       const res = await fetch("/api/items", { method: "POST", body: fd });
@@ -142,6 +145,8 @@ export default function AddItemPage() {
       setResearch(data);
       if (data.item) setItem(data.item);
       if (data.description) setDescription(data.description);
+      if (data.suggested_sale_price != null)
+        setSalePrice(String(data.suggested_sale_price));
     } catch (err) {
       setErrorMsg(err.message || "Identification failed. You can still save manually.");
       setStatus("error");
@@ -270,21 +275,37 @@ export default function AddItemPage() {
           />
         </label>
 
-        <label style={styles.label}>
-          Cost *
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.01"
-            min="0"
-            value={cost}
-            onChange={(e) => setCost(e.target.value)}
-            required
-            placeholder="0.00"
-            style={styles.input}
-            disabled={saving}
-          />
-        </label>
+        <div style={styles.priceRow}>
+          <label style={{ ...styles.label, flex: 1 }}>
+            Cost *
+            <input
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0"
+              value={cost}
+              onChange={(e) => setCost(e.target.value)}
+              required
+              placeholder="0.00"
+              style={styles.input}
+              disabled={saving}
+            />
+          </label>
+          <label style={{ ...styles.label, flex: 1 }}>
+            Sale Price
+            <input
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0"
+              value={salePrice}
+              onChange={(e) => setSalePrice(e.target.value)}
+              placeholder="optional"
+              style={styles.input}
+              disabled={saving}
+            />
+          </label>
+        </div>
 
         <button type="submit" style={styles.save} disabled={saving}>
           {saving ? "Saving…" : "Save"}
@@ -319,6 +340,7 @@ const styles = {
   h1: { fontSize: 24, margin: "8px 0 16px", color: "#333" },
   form: { display: "flex", flexDirection: "column", gap: 14 },
   photoRow: { display: "flex", gap: 12 },
+  priceRow: { display: "flex", gap: 12 },
   photoHalf: { flex: 1 },
   photoButton: {
     width: "100%",
