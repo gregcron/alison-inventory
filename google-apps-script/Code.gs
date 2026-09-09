@@ -20,7 +20,7 @@ const FOLDER_ID = "1Hm0qelNvrXQnv5aGJ7mVRv2Wx9cYSaEO";
 const SHEET_NAME = "Products to Booth";
 // Must match GOOGLE_APP_SECRET in the app's environment variables.
 // Any long random string. Prevents strangers who find the URL from posting.
-const SHARED_SECRET = "PASTE_YOUR_GOOGLE_APP_SECRET_HERE";
+const SHARED_SECRET = "e747b589de84adaa9633de0fe3e8bdf0d07e3e897043a62d";
 // ===========================
 
 const CATEGORIES = ["Art", "Bag", "Clothing", "Decor", "Jewelry", "Keychains", "Random", "Shoes"];
