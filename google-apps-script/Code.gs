@@ -25,6 +25,13 @@ const SHARED_SECRET = "PASTE_YOUR_GOOGLE_APP_SECRET_HERE";
 
 const CATEGORIES = ["Art", "Bag", "Clothing", "Decor", "Jewelry", "Keychains", "Random", "Shoes"];
 
+function getNextItemId(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return 1; // header only
+  const lastId = parseInt(sheet.getRange(lastRow, 1).getValue(), 10);
+  return isFinite(lastId) ? lastId + 1 : lastRow;
+}
+
 function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents || "{}");
@@ -64,14 +71,15 @@ function doPost(e) {
     //    files don't silently accumulate in the folder.
     const salePrice = parseFloat(body.sale_price);
     try {
-      SpreadsheetApp.openById(SHEET_ID)
-        .getSheetByName(SHEET_NAME)
-        .appendRow([
-          category,
-          item,
-          cost.toFixed(2),
-          isFinite(salePrice) ? salePrice.toFixed(2) : "",
-        ]);
+      const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_NAME);
+      const nextId = getNextItemId(sheet);
+      sheet.appendRow([
+        nextId,
+        category,
+        item,
+        cost.toFixed(2),
+        isFinite(salePrice) ? salePrice.toFixed(2) : "",
+      ]);
     } catch (sheetErr) {
       if (uploadedFile) uploadedFile.setTrashed(true);
       throw sheetErr;
