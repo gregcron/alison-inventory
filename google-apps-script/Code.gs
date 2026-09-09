@@ -108,11 +108,11 @@ function doPost(e) {
         );
       if (headers["Category"]) row[headers["Category"] - 1] = category;
       if (headers["Item"]) row[headers["Item"] - 1] = item;
-      if (headers["Cost"]) row[headers["Cost"] - 1] = cost.toFixed(2);
+      if (headers["Cost"]) row[headers["Cost"] - 1] = cost;
       if (headers["Sale Price"])
-        row[headers["Sale Price"] - 1] = isFinite(salePrice)
-          ? salePrice.toFixed(2)
-          : "";
+        row[headers["Sale Price"] - 1] = isFinite(salePrice) ? salePrice : "";
+      if (headers["Image"] && uploadedFile)
+        row[headers["Image"] - 1] = uploadedFile.getUrl();
 
       sheet.appendRow(row);
     } catch (sheetErr) {
@@ -120,7 +120,7 @@ function doPost(e) {
       throw sheetErr;
     }
 
-    return respond(200, { ok: true, _debug: { headers: headers, row: row, tab: sheet.getName() } });
+    return respond(200, { ok: true });
   } catch (err) {
     return respond(500, { error: String(err && err.message ? err.message : err) });
   }
