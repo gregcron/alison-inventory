@@ -14,8 +14,9 @@
  */
 
 // ===== CONFIGURE THESE =====
-const SHEET_ID = "1xsPn9KjBDoVX4mU4Y7_0p8iVZ3_gZTjwd0Zj9K7-MSA";
-const FOLDER_ID = "19ZeCyt4NRpXUPYzIUfqBE91S6nFapcic";
+const SHEET_ID = "1h5oUMrfW9CdpjlCf5lbvDiM6bxm9RvNyUxL4CbFXXMo";
+const FOLDER_ID = "1Hm0qelNvrXQnv5aGJ7mVRv2Wx9cYSaEO";
+// Change this if the active tab in Alison's sheet is not named "Sheet1".
 const SHEET_NAME = "Sheet1";
 // Must match GOOGLE_APP_SECRET in the app's environment variables.
 // Any long random string. Prevents strangers who find the URL from posting.
