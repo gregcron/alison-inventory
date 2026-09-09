@@ -115,6 +115,8 @@ function doPost(e) {
         row[headers["Image"] - 1] = uploadedFile.getUrl();
       if (headers["Location"])
         row[headers["Location"] - 1] = "Home";
+      if (headers["Status"])
+        row[headers["Status"] - 1] = "In Stock";
 
       sheet.appendRow(row);
     } catch (sheetErr) {
