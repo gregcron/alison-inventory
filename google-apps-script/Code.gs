@@ -71,7 +71,9 @@ function doPost(e) {
     //    files don't silently accumulate in the folder.
     const salePrice = parseFloat(body.sale_price);
     try {
-      const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_NAME);
+      const sheets = SpreadsheetApp.openById(SHEET_ID).getSheets();
+      if (!sheets.length) throw new Error("No sheets found in spreadsheet.");
+      const sheet = sheets[0]; // first tab
       const nextId = getNextItemId(sheet);
       sheet.appendRow([
         nextId,
