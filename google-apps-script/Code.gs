@@ -113,6 +113,8 @@ function doPost(e) {
         row[headers["Sale Price"] - 1] = isFinite(salePrice) ? salePrice : "";
       if (headers["Image"] && uploadedFile)
         row[headers["Image"] - 1] = uploadedFile.getUrl();
+      if (headers["Location"])
+        row[headers["Location"] - 1] = "Home";
 
       sheet.appendRow(row);
     } catch (sheetErr) {
