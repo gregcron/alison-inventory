@@ -120,7 +120,7 @@ function doPost(e) {
       throw sheetErr;
     }
 
-    return respond(200, { ok: true });
+    return respond(200, { ok: true, _debug: { headers: headers, row: row, tab: sheet.getName() } });
   } catch (err) {
     return respond(500, { error: String(err && err.message ? err.message : err) });
   }
