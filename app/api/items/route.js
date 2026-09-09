@@ -18,7 +18,10 @@ export async function POST(request) {
 
     const form = await request.formData();
     const item = (form.get("item") || "").toString().trim();
-    const description = (form.get("description") || "").toString().trim();
+    let category = (form.get("category") || "Other").toString().trim();
+    if (!["Art","Bag","Clothing","Decor","Jewelry","Keychains","Random","Shoes","Other"].includes(category)) {
+      category = "Other";
+    }
     const cost = parseFloat((form.get("cost") || "").toString().trim());
     const photo = form.get("photo");
 
@@ -31,16 +34,10 @@ export async function POST(request) {
 
     const payload = {
       secret,
+      category,
       item,
-      description,
       cost,
     };
-    const suggestedPrice = parseFloat(
-      (form.get("suggested_price") || "").toString()
-    );
-    if (Number.isFinite(suggestedPrice) && suggestedPrice >= 0) {
-      payload.suggested_price = suggestedPrice;
-    }
     const salePrice = parseFloat((form.get("sale_price") || "").toString());
     if (Number.isFinite(salePrice) && salePrice >= 0) {
       payload.sale_price = salePrice;

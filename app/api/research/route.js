@@ -20,9 +20,10 @@ STEP 3 — Write 1-2 sentences summarizing what you found, then end your reply w
 {
   "item": "short shelf-tag name (brand/maker + item type + key descriptor)",
   "description": "1-3 sentences for an inventory record",
-  "suggested_sale_price": number|null,
-  "suggested_price_low": number|null,
-  "suggested_price_high": number|null,
+  "category": "one of: Art, Bag, Clothing, Decor, Jewelry, Keychains, Random, Shoes",
+  "sale_price": number|null,
+  "sale_price_low": number|null,
+  "sale_price_high": number|null,
   "confidence": "high|medium|low",
   "comparables": [{"title": "", "url": "copy the real URL from the search result", "source": "hostname", "price": 0, "price_type": "asking|sold|retail|reference|unknown"}],
   "visible_markings": ["exact text read from the image"],

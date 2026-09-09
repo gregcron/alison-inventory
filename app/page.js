@@ -6,7 +6,7 @@ export default function AddItemPage() {
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [item, setItem] = useState("");
-  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("Other");
   const [cost, setCost] = useState("");
   const [salePrice, setSalePrice] = useState("");
   const [status, setStatus] = useState("idle"); // idle | saving | success | error
@@ -81,7 +81,7 @@ export default function AddItemPage() {
 
   function resetForm() {
     setItem("");
-    setDescription("");
+    setCategory("Other");
     setCost("");
     setSalePrice("");
     setPhoto(null);
@@ -114,14 +114,12 @@ export default function AddItemPage() {
 
     try {
       const fd = new FormData();
+      fd.append("category", category);
       fd.append("item", item.trim());
-      fd.append("description", description.trim());
       fd.append("cost", costNum.toFixed(2));
       const saleNum = parseFloat(salePrice);
       if (Number.isFinite(saleNum) && saleNum >= 0)
         fd.append("sale_price", saleNum);
-      if (research?.suggested_sale_price != null)
-        fd.append("suggested_price", research.suggested_sale_price);
       if (photo) fd.append("photo", photo);
 
       const res = await fetch("/api/items", { method: "POST", body: fd });
@@ -150,9 +148,10 @@ export default function AddItemPage() {
       if (!res.ok) throw new Error(data.error || `Research failed (${res.status})`);
       setResearch(data);
       if (data.item) setItem(data.item);
-      if (data.description) setDescription(data.description);
-      if (data.suggested_sale_price != null)
-        setSalePrice(String(data.suggested_sale_price));
+      const validCats = ["Art","Bag","Clothing","Decor","Jewelry","Keychains","Random","Shoes"];
+      if (data.category && validCats.includes(data.category)) setCategory(data.category);
+      if (data.sale_price != null)
+        setSalePrice(String(data.sale_price));
     } catch (err) {
       setErrorMsg(err.message || "Identification failed. You can still save manually.");
       setStatus("error");
@@ -272,13 +271,16 @@ export default function AddItemPage() {
 
         {research && (
           <div style={styles.researchPanel}>
-            {research.suggested_sale_price != null ? (
+            <p style={styles.price}>
+              {research.category ? `Category: ${research.category}` : ""}
+              {research.confidence ? ` · ${research.confidence} confidence` : ""}
+            </p>
+            {research.sale_price != null ? (
               <p style={styles.price}>
-                Suggested: <strong>${research.suggested_sale_price}</strong>
-                {research.suggested_price_low != null &&
-                  research.suggested_price_high != null &&
-                  ` (range $${research.suggested_price_low}–$${research.suggested_price_high})`}
-                {research.confidence ? ` · ${research.confidence} confidence` : ""}
+                Suggested: <strong>${research.sale_price}</strong>
+                {research.sale_price_low != null &&
+                  research.sale_price_high != null &&
+                  ` (range $${research.sale_price_low}–$${research.sale_price_high})`}
               </p>
             ) : (
               <p style={styles.price}>No price suggestion — not enough evidence.</p>
@@ -315,15 +317,23 @@ export default function AddItemPage() {
         </label>
 
         <label style={styles.label}>
-          Description
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={2}
-            placeholder="Optional notes"
-            style={{ ...styles.input, resize: "vertical" }}
+          Category
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            style={{ ...styles.input, padding: "13px 14px" }}
             disabled={saving}
-          />
+          >
+            <option>Art</option>
+            <option>Bag</option>
+            <option>Clothing</option>
+            <option>Decor</option>
+            <option>Jewelry</option>
+            <option>Keychains</option>
+            <option>Random</option>
+            <option>Shoes</option>
+            <option>Other</option>
+          </select>
         </label>
 
         <div style={styles.priceRow}>

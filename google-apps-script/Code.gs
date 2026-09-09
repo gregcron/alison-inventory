@@ -23,6 +23,8 @@ const SHEET_NAME = "Sheet1";
 const SHARED_SECRET = "PASTE_YOUR_GOOGLE_APP_SECRET_HERE";
 // ===========================
 
+const CATEGORIES = ["Art", "Bag", "Clothing", "Decor", "Jewelry", "Keychains", "Random", "Shoes"];
+
 function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents || "{}");
@@ -32,14 +34,14 @@ function doPost(e) {
     }
 
     const item = String(body.item || "").trim();
-    const description = String(body.description || "").trim();
     const cost = parseFloat(body.cost);
+    let category = String(body.category || "Other").trim();
+    if (!CATEGORIES.includes(category)) category = "Other";
     if (!item) return respond(400, { error: "Item name is required." });
     if (!isFinite(cost) || cost < 0)
       return respond(400, { error: "A valid cost is required." });
 
-    // 1. Save the photo to Drive (if provided).
-    let photoLink = "";
+    // 1. Save the photo to Drive (if provided) for visual backup.
     let uploadedFile = null;
     if (body.photo && body.photo.data) {
       const bytes = Utilities.base64Decode(body.photo.data);
@@ -56,23 +58,18 @@ function doPost(e) {
           "." +
           (blob.getName().split(".").pop() || "jpg")
       );
-      photoLink = uploadedFile.getUrl();
     }
 
     // 2. Append the row. If this fails, delete the photo so orphaned
     //    files don't silently accumulate in the folder.
-    const suggestedPrice = parseFloat(body.suggested_price);
     const salePrice = parseFloat(body.sale_price);
     try {
       SpreadsheetApp.openById(SHEET_ID)
         .getSheetByName(SHEET_NAME)
         .appendRow([
-          new Date(),
+          category,
           item,
-          description,
           cost.toFixed(2),
-          photoLink,
-          isFinite(suggestedPrice) ? suggestedPrice.toFixed(2) : "",
           isFinite(salePrice) ? salePrice.toFixed(2) : "",
         ]);
     } catch (sheetErr) {
