@@ -17,7 +17,7 @@
 const SHEET_ID = "1h5oUMrfW9CdpjlCf5lbvDiM6bxm9RvNyUxL4CbFXXMo";
 const FOLDER_ID = "1Hm0qelNvrXQnv5aGJ7mVRv2Wx9cYSaEO";
 // Change this if the active tab in Alison's sheet is not named "Sheet1".
-const SHEET_NAME = "Products to Booth";
+const SHEET_NAME = "Inventory";
 // Must match GOOGLE_APP_SECRET in the app's environment variables.
 // Any long random string. Prevents strangers who find the URL from posting.
 const SHARED_SECRET = "e747b589de84adaa9633de0fe3e8bdf0d07e3e897043a62d";
