@@ -17,7 +17,7 @@
 const SHEET_ID = "1h5oUMrfW9CdpjlCf5lbvDiM6bxm9RvNyUxL4CbFXXMo";
 const FOLDER_ID = "1Hm0qelNvrXQnv5aGJ7mVRv2Wx9cYSaEO";
 // Change this if the active tab in Alison's sheet is not named "Sheet1".
-const SHEET_NAME = "Sheet1";
+const SHEET_NAME = "Products to Booth";
 // Must match GOOGLE_APP_SECRET in the app's environment variables.
 // Any long random string. Prevents strangers who find the URL from posting.
 const SHARED_SECRET = "PASTE_YOUR_GOOGLE_APP_SECRET_HERE";
@@ -100,6 +100,12 @@ function doPost(e) {
 
       if (headers["Item ID"])
         row[headers["Item ID"] - 1] = getNextItemId(sheet, headers);
+      if (headers["Purchase Date"])
+        row[headers["Purchase Date"] - 1] = Utilities.formatDate(
+          new Date(),
+          "America/New_York",
+          "M/d/yyyy"
+        );
       if (headers["Category"]) row[headers["Category"] - 1] = category;
       if (headers["Item"]) row[headers["Item"] - 1] = item;
       if (headers["Cost"]) row[headers["Cost"] - 1] = cost.toFixed(2);
