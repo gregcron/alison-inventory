@@ -25,10 +25,24 @@ const SHARED_SECRET = "PASTE_YOUR_GOOGLE_APP_SECRET_HERE";
 
 const CATEGORIES = ["Art", "Bag", "Clothing", "Decor", "Jewelry", "Keychains", "Random", "Shoes"];
 
-function getNextItemId(sheet) {
+function getHeaderMap(sheet) {
+  const values = sheet
+    .getRange(1, 1, 1, sheet.getLastColumn())
+    .getValues()[0];
+  const map = {};
+  values.forEach((v, i) => {
+    const name = String(v || "").trim();
+    if (name) map[name] = i + 1; // 1-based column index
+  });
+  return map;
+}
+
+function getNextItemId(sheet, headers) {
+  const col = headers["Item ID"];
+  if (!col) throw new Error('Missing "Item ID" column header.');
   const lastRow = sheet.getLastRow();
   if (lastRow <= 1) return 1; // header only
-  const lastId = parseInt(sheet.getRange(lastRow, 1).getValue(), 10);
+  const lastId = parseInt(sheet.getRange(lastRow, col).getValue(), 10);
   return isFinite(lastId) ? lastId + 1 : lastRow;
 }
 
@@ -67,21 +81,34 @@ function doPost(e) {
       );
     }
 
-    // 2. Append the row. If this fails, delete the photo so orphaned
-    //    files don't silently accumulate in the folder.
+    // 2. Append the row. We map columns by header name so column order
+    //    can change without breaking the app. If this fails, delete the
+    //    photo so orphaned files don't silently accumulate in the folder.
     const salePrice = parseFloat(body.sale_price);
     try {
-      const sheets = SpreadsheetApp.openById(SHEET_ID).getSheets();
-      if (!sheets.length) throw new Error("No sheets found in spreadsheet.");
-      const sheet = sheets[0]; // first tab
-      const nextId = getNextItemId(sheet);
-      sheet.appendRow([
-        nextId,
-        category,
-        item,
-        cost.toFixed(2),
-        isFinite(salePrice) ? salePrice.toFixed(2) : "",
-      ]);
+      let sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_NAME);
+      if (!sheet) {
+        const sheets = SpreadsheetApp.openById(SHEET_ID).getSheets();
+        if (!sheets.length) throw new Error("No sheets found in spreadsheet.");
+        sheet = sheets[0]; // fall back to first tab
+      }
+      const headers = getHeaderMap(sheet);
+
+      // Build a row covering all existing columns, defaulting to empty.
+      const numCols = sheet.getLastColumn() || Object.keys(headers).length;
+      const row = new Array(numCols).fill("");
+
+      if (headers["Item ID"])
+        row[headers["Item ID"] - 1] = getNextItemId(sheet, headers);
+      if (headers["Category"]) row[headers["Category"] - 1] = category;
+      if (headers["Item"]) row[headers["Item"] - 1] = item;
+      if (headers["Cost"]) row[headers["Cost"] - 1] = cost.toFixed(2);
+      if (headers["Sale Price"])
+        row[headers["Sale Price"] - 1] = isFinite(salePrice)
+          ? salePrice.toFixed(2)
+          : "";
+
+      sheet.appendRow(row);
     } catch (sheetErr) {
       if (uploadedFile) uploadedFile.setTrashed(true);
       throw sheetErr;
