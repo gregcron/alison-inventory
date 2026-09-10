@@ -37,13 +37,25 @@ function getHeaderMap(sheet) {
   return map;
 }
 
-function getNextItemId(sheet, headers) {
-  const col = headers["Item ID"];
+// Find the last row that has actual inventory data by scanning a key column
+// (Item) downward. This avoids being thrown off by pre-filled dropdown cells
+// in other columns that extend far below the real data.
+function getLastDataRow(sheet, headers) {
+  const col = headers["Item"] || headers["Item ID"] || 1;
+  const values = sheet.getRange(2, col, sheet.getLastRow() - 1, 1).getValues();
+  let lastData = 0; // 0 = no data rows
+  for (var i = 0; i < values.length; i++) {
+    if (String(values[i][0]).trim() !== "") lastData = i + 1; // 1-based within data
+  }
+  return lastData + 1; // +1 for header row = actual sheet row of last data
+}
+
+function getNextItemId(sheet, headers, lastDataRow) {
+  var col = headers["Item ID"];
   if (!col) throw new Error('Missing "Item ID" column header.');
-  const lastRow = sheet.getLastRow();
-  if (lastRow <= 1) return 1; // header only
-  const lastId = parseInt(sheet.getRange(lastRow, col).getValue(), 10);
-  return isFinite(lastId) ? lastId + 1 : lastRow;
+  if (lastDataRow <= 1) return 1; // header only
+  var lastId = parseInt(sheet.getRange(lastDataRow, col).getValue(), 10);
+  return isFinite(lastId) ? lastId + 1 : lastDataRow;
 }
 
 function doPost(e) {
@@ -98,8 +110,11 @@ function doPost(e) {
       const numCols = sheet.getLastColumn() || Object.keys(headers).length;
       const row = new Array(numCols).fill("");
 
+      var lastDataRow = getLastDataRow(sheet, headers);
+      var insertRow = lastDataRow + 1; // row right after last data
+
       if (headers["Item ID"])
-        row[headers["Item ID"] - 1] = getNextItemId(sheet, headers);
+        row[headers["Item ID"] - 1] = getNextItemId(sheet, headers, lastDataRow);
       if (headers["Purchase Date"])
         row[headers["Purchase Date"] - 1] = Utilities.formatDate(
           new Date(),
@@ -118,7 +133,9 @@ function doPost(e) {
       if (headers["Status"])
         row[headers["Status"] - 1] = "In Stock";
 
-      sheet.appendRow(row);
+      // Write into the correct row instead of appendRow, which would land
+      // after pre-filled dropdown cells at the bottom of the sheet.
+      sheet.getRange(insertRow, 1, 1, row.length).setValues([row]);
     } catch (sheetErr) {
       if (uploadedFile) uploadedFile.setTrashed(true);
       throw sheetErr;
